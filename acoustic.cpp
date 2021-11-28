@@ -20,14 +20,26 @@
 
 using namespace std;
 
+const int c =  1130;
 int height;
 int width;
 int length;
 
+// Integer values used to determining nodal values
+int p, q, r;
+
+// Loop counter
+int i;
+
+double frequency;
+
+// Define the list structure here
+
+// This is used to define the wait time to display the splash screen
 unsigned int sleep(unsigned int seconds);
 
-int main(){
-
+int main()
+{
 
     cout << "+---------------------------------------------------------------------+" << endl;
     cout << "|                                                                     |" << endl;
@@ -58,5 +70,26 @@ int main(){
     cout << "Length :" << length << endl;
     cout << "Height :" << height << endl;
     cout << "Width  :" << width << endl;
+
+	/*-----------------------------------------------------------------------*/
+	/*            Determine the frequence values for a given node            */
+	/*-----------------------------------------------------------------------*/
+
+	p = q = r = 0;
+
+	while ( frequency <= 20000 ) {
+		if ((p == 0) && (q == 0) && (r == 0)) {
+			frequency = c/2;
+			cout << " Frequency is: " << frequency  << endl;
+
+			cout << "+-------------------------------------------------------+" << endl;
+			cout << "| Frequency | Mode Num | p  q  r |  Ax  |  Tan  |  Obl  |" << endl;
+			cout << "+-------------------------------------------------------+" << endl;
+			cout << "| " << frequency << " | " << i << " | " << " | " << p << q << r << " | " << endl;
+			cout << "+-------------------------------------------------------+" << endl;
+		}
+	}
+
+
     return 0;
 }
