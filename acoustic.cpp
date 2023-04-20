@@ -23,6 +23,11 @@
 /* 01/12/2023:                                                                                */
 /* Completed sort routine. Cleaned up code. Load into github.                                 */
 /*--------------------------------------------------------------------------------------------*/
+/* 04/18/2023:                                                                                */
+/* Completed speaker placement measurement for Cardas method.                                 */
+/* Cleaned up file write method to append to txt file.                                        */
+/* Added in error checking to handle invalid data for width/length for speaker placement.     */
+/*--------------------------------------------------------------------------------------------*/
 
 #include <algorithm>
 #include <iostream>
@@ -56,6 +61,9 @@ int p, q, r;
 // Loop counter
 int i, j, k;
 
+// Entry error check
+int bad_val = 0;
+
 int axil, tangnt, obliq;
 int calc;
 int max = 100;
@@ -77,9 +85,6 @@ float sqr;
 /*               Structures and Pointers                       */
 /*-------------------------------------------------------------*/
 
-
-/*-------------------------------------------------------------*/
-
 // Define the array structure here
 struct Roomnode
 {
@@ -99,18 +104,28 @@ void Nodal_display(struct Roomnode NodeCnt[], int lmt, string node_file, int lgt
 {
 	int i = 0;
 
-	string output = "temp_file.txt";
 	string nodal;
 	string str1, str2; // index, frequency display field formatting
 	string padstr;
+
 	int result;
 	int slength;
 	int node;
 	int room_vol;
 
+	float seating;
+	float seperation;
+	float diagonal;
+	float ctr_pt;
+	float vert_line;
+	float sep;
+	float base_pt;
+	const float GR = 1.62;
+	float midpoint;
+	
 	room_vol = lgth * hght * wdth;
 
-	ofstream outfile(node_file);
+	ofstream outfile(node_file, ios::app);
     outfile << "Length :" << lgth << endl;
     outfile << "Height :" << hght << endl;
     outfile << "Width  :" << wdth << endl;
@@ -156,7 +171,6 @@ void Nodal_display(struct Roomnode NodeCnt[], int lmt, string node_file, int lgt
 
 		outfile << "|  " << str1 << " | " <<  str2 << " | " << NodeCnt[i].axl << " | " << NodeCnt[i].tgn << " | " << NodeCnt[i].obl << " | " <<  NodeCnt[i].nodal << " | " << endl;
 	}
-
 	cout << "+--------+---------+---+---+---+------------+" << endl;
 	outfile << "+--------+---------+---+---+---+------------+" << endl;
 
@@ -164,7 +178,7 @@ void Nodal_display(struct Roomnode NodeCnt[], int lmt, string node_file, int lgt
 }
 
 /*-------------------------------------------------------------*/
-void Sort_Nodal(struct Roomnode NodeCnt[], int lmt)
+void Nodal_sort(struct Roomnode NodeCnt[], int lmt)
 {
 	Roomnode temp;
 	int i, j;
@@ -182,6 +196,96 @@ void Sort_Nodal(struct Roomnode NodeCnt[], int lmt)
 			}
 		}
 	}
+}
+/*-------------------------------------------------------------*/
+void Nodal_speaker(float width, float length, string node_file)
+{
+	int flg_wide = 0;
+	int flg_seat = 0;
+
+	float seating;
+	float seperation;
+	float diagonal;
+	float ctr_pt;
+	float vert_line;
+	float sep;
+	float base_pt;
+	const float GR = 1.62;
+	float midpoint;
+	
+	ofstream outfile(node_file, ios::app);
+
+	seating = 0.0;
+	seperation = 0.0;
+
+	while  ( !flg_seat ){
+		cout << "Enter Seating position from FrontWall (FW): ";
+		cin >> seating;
+	
+		if (seating <= 0) {
+			seating = abs(seating);
+		}
+	
+		if (length <= seating) {
+			cout << "the seating postion is deeper then the room length" << endl;
+			cout << "Program error - re-enter data" << endl;
+		} else {
+			flg_seat = 1;
+		}
+	}
+	flg_seat = 0;
+
+	while  ( !flg_wide ){
+		cout << "Enter speaker seperation                  : ";
+   		cin >> seperation;
+	
+		if (seperation <= 0) {
+			seperation = abs(seperation);
+		}
+	
+		if (width <= seperation) {
+			cout << "the seating postion is wider then the room width" << endl;
+			cout << "Program error - re-enter data" << endl;
+		} else {
+			flg_wide = 1;
+		}
+	}
+	flg_wide = 0;
+	
+	if (length > width) {
+		cout << "This is a normal length-oriented room" << endl;
+		cout << "Length is: " << length << endl;
+		cout << "Width is: " << width << endl;
+	} else if (length < width) {
+		cout << "This is a abnormal width-oriented room" << endl;
+		cout << "Length is: " << length << endl;
+		cout << "Width is: " << width << endl;
+	} else {
+		// Square room
+		cout << "This is a square room" << endl;
+		cout << "Length is: " << length << endl;
+		cout << "Width is: " << width << endl;
+	}
+
+	sep = (seperation/2.0) * GR;
+	vert_line = seating - sep;
+	base_pt = seating - vert_line;
+
+	cout << "---------------------------------------" << endl;
+	cout << "- Ideal experimental speaker position: " << endl;
+	cout << "- Speaker width - " << seperation << " ft " << endl;
+	cout << "- Speaker position from FW - " << base_pt << " ft " << endl;
+	cout << "- Seating position from  FW - " << seating << " ft " << endl;
+	cout << "---------------------------------------" << endl;
+
+	outfile << "+--------------------------------------+" << endl;
+	outfile << "- Ideal experimental speaker position: " << endl;
+	outfile << "- Speaker width - " << seperation << " ft " << endl;
+	outfile << "- Speaker position from FW - " << base_pt << " ft " << endl;
+	outfile << "- Seating position from  FW - " << seating << " ft " << endl;
+	outfile << "+--------------------------------------+" << endl;
+	
+	outfile.close();
 }
 /*-------------------------------------------------------------*/
 /*                       MAIN PROGRAM                          */
@@ -207,14 +311,23 @@ int main()
     /* Prompt user for Length, Width and Height of a given room              */
     /*-----------------------------------------------------------------------*/
 
-    cout << "Specify the room length(L): ";
-    cin >> length;
+	cout << "Specify the room length(L) in feet or meters: ";
+	cin >> length;
+	if (length <= 0) {
+		length = abs(length);
+	}
 
     cout << "Specify the room height(H): ";
     cin >> height;
+	if (height <= 0) {
+		height = abs(height);
+	}
 
     cout << "Specify the room width(W): ";
     cin >> width;
+	if (width <= 0) {
+		width = abs(width);
+	}
     
 	cout << "Save to file: ";
 	cin >> file_nodal;
@@ -227,6 +340,7 @@ int main()
     cout << "Length :" << length << endl;
     cout << "Height :" << height << endl;
     cout << "Width  :" << width << endl;
+	
 	cout << "Destination file: " << file_nodal << endl;
 
 	/*-----------------------------------------------------------------------*/
@@ -330,9 +444,13 @@ int main()
 		}
 	}
 
-	Sort_Nodal(NodeCnt, indx);
+	ofstream outfile(file_nodal);
+	Nodal_sort(NodeCnt, indx);
 
 	Nodal_display(NodeCnt, indx, file_nodal, length, height, width);
+
+	Nodal_speaker(width, length, file_nodal);
+	outfile.close();
 
     return 0;
 }
